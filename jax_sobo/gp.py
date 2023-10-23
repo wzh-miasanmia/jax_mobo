@@ -1,6 +1,9 @@
 import jax.numpy as jnp
 from jax import jit
 import matplotlib.pyplot as plt
+from jax.scipy.linalg import cholesky, solve_triangular
+from matplotlib import animation, cm
+
 
 # Covariance matrix calculation
 def kernel(X1, X2, l=1.0, sigma_f=1.0):
@@ -41,20 +44,63 @@ def posterior(X_s, X_train, Y_train, l=1.0, sigma_f=1.0, sigma_y=1e-8):
     K_ss = kernel_jit(X_s, X_s, l, sigma_f) + 1e-8 * jnp.eye(len(X_s))  
 
     # Use Cholesky decomposition instead of inverse
-    L = jnp.linalg.cholesky(K)
-    alpha = jnp.linalg.solve(L.T, jnp.linalg.solve(L, Y_train))
+    L = cholesky(K, lower=True) 
+    alpha = solve_triangular(L.T, solve_triangular(L, Y_train, lower=True), lower=False)
 
     # Compute the posterior mean vector mu_s
     mu_s = K_s.T.dot(alpha)  
 
     # Calculate the posterior covariance matrix cov_s
-    v = jnp.linalg.solve(L, K_s)
+    v = solve_triangular(L, K_s, lower=True)
     cov_s = K_ss - v.T.dot(v)  
     
     return mu_s, cov_s
 
 posterior_jit = jit(posterior)
 
+# 
+@jit
+def nll_fn(X_train, Y_train, noise, naive=False):
+    """
+    Returns a function that computes the negative log marginal
+    likelihood for training data X_train and Y_train and given
+    noise level.
+
+    Args:
+        X_train: training locations (m x d).
+        Y_train: training targets (m x 1).
+        noise: known noise level of Y_train.
+        naive: if True use a naive implementation , if
+               False use a numerically more stable implementation.
+
+    Returns:
+        Minimization objective.
+    """
+    Y_train = Y_train.ravel()
+    
+    def nll_naive(theta):
+        K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
+            noise**2 * jnp.eye(len(X_train))
+        return 0.5 * jnp.linalg.slogdet(K) + \
+               0.5 * jnp.dot(Y_train, solve_triangular(cholesky(K), Y_train, lower=True)) + \
+               0.5 * len(X_train) * jnp.log(2*jnp.pi)
+        
+    def nll_stable(theta):
+        K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
+            noise**2 * jnp.eye(len(X_train))
+        L = cholesky(K)
+        S1 = solve_triangular(L, Y_train, lower=True)
+        S2 = solve_triangular(L.T, S1, lower=False)
+        return jnp.sum(jnp.log(jnp.diag(L))) + \
+               0.5 * jnp.dot(Y_train, S2) + \
+               0.5 * len(X_train) * jnp.log(2*jnp.pi)
+
+    if naive:
+        return nll_naive
+    else:
+        return nll_stable
+
+nll_jit = jit(nll_fn)
 
 # Plots the results
 def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[], save_path=None):
@@ -87,3 +133,9 @@ def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[], save_path=None):
     plt.show()
     if save_path:
         plt.savefig(save_path)
+
+def plot_gp_2D(gx, gy, mu, X_train, Y_train, title, i):
+    ax = plt.gcf().add_subplot(1, 2, i, projection='3d')
+    ax.plot_surface(gx, gy, mu.reshape(gx.shape), cmap=cm.coolwarm, linewidth=0, alpha=0.2, antialiased=False)
+    ax.scatter(X_train[:,0], X_train[:,1], Y_train, c=Y_train, cmap=cm.coolwarm)
+    ax.set_title(title)
