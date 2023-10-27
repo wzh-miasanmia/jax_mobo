@@ -1,12 +1,16 @@
+import jax
 import jax.numpy as jnp
-from jax import jit
+from jax import grad, jit, tree_util, vmap
 import matplotlib.pyplot as plt
 from jax.scipy.linalg import cholesky, solve_triangular
 from matplotlib import animation, cm
+from jax.lax import fori_loop
+from typing import Tuple
+
 
 
 # Covariance matrix calculation
-def kernel(X1, X2, l=1.0, sigma_f=1.0):
+def kernel(X1:jax.Array, X2:jax.Array, l=1.0, sigma_f=1.0):
     """
     Isotropic squared exponential kernel.
     
@@ -23,7 +27,7 @@ def kernel(X1, X2, l=1.0, sigma_f=1.0):
 kernel_jit = jit(kernel)
 
 
-def posterior(X_s, X_train, Y_train, l=1.0, sigma_f=1.0, sigma_y=1e-8):
+def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_f=1.0, sigma_y=1e-8):
     """
     Computes the suffifient statistics of the posterior distribution 
     from m training data X_train and Y_train and n new inputs X_s.
@@ -58,49 +62,62 @@ def posterior(X_s, X_train, Y_train, l=1.0, sigma_f=1.0, sigma_y=1e-8):
 
 posterior_jit = jit(posterior)
 
-# 
-@jit
-def nll_fn(X_train, Y_train, noise, naive=False):
-    """
-    Returns a function that computes the negative log marginal
-    likelihood for training data X_train and Y_train and given
-    noise level.
 
-    Args:
-        X_train: training locations (m x d).
-        Y_train: training targets (m x 1).
-        noise: known noise level of Y_train.
-        naive: if True use a naive implementation , if
-               False use a numerically more stable implementation.
+def optimize_mll(initial_theta:jax.Array, X_train:jax.Array, Y_train:jax.Array, noise, num_steps, lr, method:str):
+    """
+    Optimize the negative log marginal likelihood for Gaussian Process Regression.
+
+    Parameters:
+    -----------
+    initial_theta : jax.Array
+        Initial values for the hyperparameters to be optimized.
+    X_train : jax.Array
+        Training locations (m x d).
+    Y_train : jax.Array
+        Training targets (m x 1).
+    noise : float
+        Known noise level of the training targets.
+    num_steps : int
+        Number of optimization steps to perform.
+    lr : float
+        Learning rate for the optimization.
 
     Returns:
-        Minimization objective.
+    --------
+    jax.Array
+        Optimized hyperparameters that minimize the negative log marginal likelihood.
     """
     Y_train = Y_train.ravel()
-    
-    def nll_naive(theta):
-        K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
-            noise**2 * jnp.eye(len(X_train))
-        return 0.5 * jnp.linalg.slogdet(K) + \
-               0.5 * jnp.dot(Y_train, solve_triangular(cholesky(K), Y_train, lower=True)) + \
-               0.5 * len(X_train) * jnp.log(2*jnp.pi)
-        
-    def nll_stable(theta):
-        K = kernel(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
+
+    def mll(theta):
+        K = kernel_jit(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
             noise**2 * jnp.eye(len(X_train))
         L = cholesky(K)
         S1 = solve_triangular(L, Y_train, lower=True)
         S2 = solve_triangular(L.T, S1, lower=False)
         return jnp.sum(jnp.log(jnp.diag(L))) + \
-               0.5 * jnp.dot(Y_train, S2) + \
-               0.5 * len(X_train) * jnp.log(2*jnp.pi)
+                0.5 * jnp.dot(Y_train, S2) + \
+                0.5 * len(X_train) * jnp.log(2*jnp.pi)
+    grad_fun = jit(grad(mll))
 
-    if naive:
-        return nll_naive
-    else:
-        return nll_stable
+    theta = initial_theta
+    momentums = jnp.zeros_like(theta)
+    scales = jnp.zeros_like(theta)
+    if method == 'SGD':
+        for _ in range(num_steps):
+            grads = grad_fun(theta)
 
-nll_jit = jit(nll_fn)
+            momentums = 0.9 * momentums + 0.1 * grads
+
+            scales = 0.9 * scales + 0.1 * grads ** 2
+
+            theta -= lr * momentums / jnp.sqrt(scales + 1e-5)
+
+        return theta
+    
+    elif method == 'BFGS':
+        return 'not finish'
+
 
 # Plots the results
 def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[], save_path=None):
