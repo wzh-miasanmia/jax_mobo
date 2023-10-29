@@ -27,7 +27,7 @@ def kernel(X1:jax.Array, X2:jax.Array, l=1.0, sigma_f=1.0):
 kernel_jit = jit(kernel)
 
 
-def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_f=1.0, sigma_y=1e-8):
+def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_f=1.0, sigma_y=1e-8,return_std=False, return_cov=False):
     """
     Computes the suffifient statistics of the posterior distribution 
     from m training data X_train and Y_train and n new inputs X_s.
@@ -58,7 +58,14 @@ def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_
     v = solve_triangular(L, K_s, lower=True)
     cov_s = K_ss - v.T.dot(v)  
     
-    return mu_s, cov_s
+    if return_std and return_cov:
+            return mu_s, jnp.sqrt(jnp.diag(cov_s)), cov_s
+    elif return_std:
+        return mu_s, jnp.sqrt(jnp.diag(cov_s))
+    elif return_cov:
+        return mu_s, cov_s
+    else:
+        return mu_s
 
 posterior_jit = jit(posterior)
 
