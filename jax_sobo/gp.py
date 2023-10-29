@@ -123,10 +123,14 @@ def optimize_mll(initial_theta:jax.Array, X_train:jax.Array, Y_train:jax.Array, 
         return theta
     
     elif method == 'BFGS':
-        return 'not finish'
+        return 'BFGS is not finish yet'
+    else:
+        return 'Please choose a method correctly'
 
 
-# Plots the results
+
+
+## Plots the results ##
 def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[], save_path=None):
     """
     Plots the results of a Gaussian Process regression.
