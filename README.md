@@ -13,10 +13,10 @@ Plan to proceed:
 - Single-objective Bayesian optimization
 - Multi-objective Bayesian optimization
 
-use:
-
+## How to use
+```python
 conda activate maenv
-
 cd wzhmiasanmia/ma_workspace/jax_mobo/jax_sobo/
+```
 
-git pull
+
