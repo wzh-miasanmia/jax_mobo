@@ -7,15 +7,16 @@ The project is currently in its early stages and progress is as follows:
 
 Completed:
 - Gaussian process using JAX including the calculation of kernel, postrior and marginal likelihood function
+- Implemented encapsulation: GaussianProcessRegressor, with methods like fit, optim, predict, etc.
 
 Plan to proceed:
 - Single-objective Bayesian optimization
-- Visualization of multi-dimensional input Gaussian processes
+- Multi-objective Bayesian optimization
 
 use:
 
 conda activate maenv
 
-cd wzhmiasanmia/ma_workspace/jax_mobo/
+cd wzhmiasanmia/ma_workspace/jax_mobo/jax_sobo/
 
 git pull
