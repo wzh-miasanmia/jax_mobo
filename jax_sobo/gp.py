@@ -28,7 +28,8 @@ def kernel(X1:jax.Array, X2:jax.Array, l=1.0, sigma_f=1.0):
 kernel_jit = jit(kernel)
 
 
-def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_f=1.0, sigma_y=1e-8,return_std=False, return_cov=False):
+@partial(jit, static_argnums=(6, 7))
+def predict(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_f=1.0, sigma_y=1e-8,return_std=False, return_cov=True):
     """
     Computes the suffifient statistics of the posterior distribution 
     from m training data X_train and Y_train and n new inputs X_s.
@@ -68,7 +69,6 @@ def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_
     else:
         return mu_s
 
-predict = jit(partial(posterior, return_std=False, return_cov=True))
 
 
 def optimize_mll(initial_theta:jax.Array, X_train:jax.Array, Y_train:jax.Array, noise, num_steps, lr, method:str):
