@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 from jax import jit, grad
 from jax.scipy.linalg import cholesky, solve_triangular
-
+from scipy.optimize import minimize
 
 class GaussianProcessRegressor:
     def __init__(self, l=1.0, sigma_f=1.0, sigma_y=1e-8):
@@ -20,12 +20,11 @@ class GaussianProcessRegressor:
         self.L = None
         self.alpha = None
 
-    # @jit
+
     def kernel(self, X1, X2, l=1.0, sigma_f=1.0):
         sqdist = jnp.sum(X1**2, axis=1).reshape((-1, 1)) + jnp.sum(X2**2, axis=1) - 2 * jnp.dot(X1, X2.T)
         return sigma_f**2 * jnp.exp(-0.5 / l**2 * sqdist)
 
-    # @jit
     def fit(self, X, y):
         self.X_train = X
         self.Y_train = y
@@ -33,8 +32,8 @@ class GaussianProcessRegressor:
         self.L = cholesky(self.K, lower=True)
         self.alpha = solve_triangular(self.L.T, solve_triangular(self.L, self.Y_train, lower=True), lower=False)
 
-    # @jit
-    def optim(self, num_steps, lr, method='SGD'):
+
+    def optim_jax(self, num_steps, lr, method='SGD'):
         theta = jnp.array([self.l, self.sigma_f])
 
         def mll(theta):
@@ -67,8 +66,28 @@ class GaussianProcessRegressor:
             return 'BFGS is not finish yet'
         else:
             return 'Please choose a method correctly'
+        
+    def mll(self, theta):
+        K = self.kernel(self.X_train, self.X_train, l=theta[0], sigma_f=theta[1]) + self.sigma_y**2 * jnp.eye(len(self.X_train))
+        L = cholesky(K)
+        S1 = solve_triangular(L, self.Y_train, lower=True)
+        S2 = solve_triangular(L.T, S1, lower=False)
+        return jnp.sum(jnp.log(jnp.diag(L))) + 0.5 * jnp.dot(self.Y_train, S2) + 0.5 * len(self.X_train) * jnp.log(2 * jnp.pi)
 
-    # @jit
+    def optim_np(self, bounds=((1e-5, None), (1e-5, None)), method='L-BFGS-B'):
+        theta = jnp.array([self.l, self.sigma_f])
+
+        optimized_mll = jit(self.mll)
+
+        def mll_to_minimize(theta):
+            return optimized_mll(theta)
+
+        res = minimize(mll_to_minimize, [self.l, self.sigma_f], bounds=bounds, method=method)
+        self.l, self.sigma_f = res.x  # Update self.l and self.sigma_f with the optimized values
+        self.fit(self.X_train, self.Y_train)
+        return res
+
+
     def predict(self, X, return_std=False, return_cov=False):
         K_s = self.kernel(self.X_train, X)
         K_ss = self.kernel(X, X) + 1e-8 * jnp.eye(len(X))
