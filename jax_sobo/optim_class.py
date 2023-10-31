@@ -9,6 +9,7 @@ from functools import partial
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
+@jit
 def expected_improvement(X, X_sample, Y_sample, gpr:GaussianProcessRegressor, xi=0.01):
     '''
     Computes the EI at points X based on existing samples X_sample
@@ -44,6 +45,7 @@ def expected_improvement(X, X_sample, Y_sample, gpr:GaussianProcessRegressor, xi
 def jacobian(f: Callable) -> Callable:
     return jit(jacrev(f))
 
+@jit
 def suggest_next(key, X_sample, Y_sample, gpr, bounds, acq: Callable, n_seed=1000, lr=0.1, n_epochs=150):
 
     key1, key2 = random.split(key, 2)
@@ -68,7 +70,7 @@ def suggest_next(key, X_sample, Y_sample, gpr, bounds, acq: Callable, n_seed=100
     return next_X, key2
 
 
-def propose_location(key, acquisition, X_sample, Y_sample, gpr, bounds, n_restarts=25):
+def propose_location(acquisition, X_sample, Y_sample, gpr, bounds, n_restarts=25):
     '''
     Proposes the next sampling point by optimizing the acquisition function.
     
@@ -84,13 +86,14 @@ def propose_location(key, acquisition, X_sample, Y_sample, gpr, bounds, n_restar
     dim = X_sample.shape[1]
     min_val = 1
     min_x = None
-    
+    key = random.PRNGKey(42)
+
     def min_obj(X):
         # Minimization objective is the negative acquisition function
         return -acquisition(X.reshape(-1, dim), X_sample, Y_sample, gpr).flatten()
     
     # Find the best optimum by starting from n_restart different random points.
-    for x0 in random.uniform(key, (n_restarts, dim), bounds[:, 0], bounds[:, 1]):
+    for x0 in random.uniform(key, (n_restarts, dim), minval=bounds[:, 0], maxval=bounds[:, 1]):
         res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')        
         if res.fun < min_val:
             min_val = res.fun[0]
