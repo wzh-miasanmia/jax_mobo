@@ -6,6 +6,7 @@ from jax.scipy.linalg import cholesky, solve_triangular
 from matplotlib import animation, cm
 from jax.lax import fori_loop
 from typing import Tuple
+from functools import partial
 
 
 
@@ -59,7 +60,7 @@ def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_
     cov_s = K_ss - v.T.dot(v)  
     
     if return_std and return_cov:
-            return mu_s, jnp.sqrt(jnp.diag(cov_s)), cov_s
+        return mu_s, jnp.sqrt(jnp.diag(cov_s)), cov_s
     elif return_std:
         return mu_s, jnp.sqrt(jnp.diag(cov_s))
     elif return_cov:
@@ -67,7 +68,7 @@ def posterior(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_
     else:
         return mu_s
 
-posterior_jit = jit(posterior)
+predict = jit(partial(posterior, return_std=False, return_cov=True))
 
 
 def optimize_mll(initial_theta:jax.Array, X_train:jax.Array, Y_train:jax.Array, noise, num_steps, lr, method:str):
