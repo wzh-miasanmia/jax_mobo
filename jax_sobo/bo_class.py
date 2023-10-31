@@ -9,7 +9,7 @@ from functools import partial
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 
-@jit
+
 def expected_improvement(X, X_sample, Y_sample, gpr:GaussianProcessRegressor, xi=0.01):
     '''
     Computes the EI at points X based on existing samples X_sample

@@ -1,14 +1,25 @@
 import jax
-from gp import posterior_jit
+from gp import predict
 from jax.scipy.stats import norm
 import jax.numpy as jnp
-from jax import random
+from jax import jacrev, jit, lax, random, tree_map, vmap, Array
+from typing import Callable, NamedTuple, Tuple, Union, Optional
 
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
+from functools import partial
 
 # The acq used in the article is EHVI, EI is used here instead.
+class OptimizerParameters(NamedTuple):
+    """
+    Object holding the results of the optimization.
+    """
 
+    target: Union[Array, float]
+    params: Array
+    f: Callable
+    params_all: Array
+    target_all: Array
 
 def expected_improvement(X:jax.Array, X_sample:jax.Array, Y_sample:jax.Array, ls=1.0, sigma_f=1.0, noise=1e-8, xi=0.01):
     '''
@@ -24,47 +35,52 @@ def expected_improvement(X:jax.Array, X_sample:jax.Array, Y_sample:jax.Array, ls
     Returns:
         Expected improvements at points X.
     '''
-    mu, sigma = posterior_jit(X_s=X, X_train=X_sample, Y_train=Y_sample,l=ls, sigma_f=sigma_f, sigma_y=noise)
-    mu_sample, _ = posterior_jit(X_s=X_sample, X_train=X_sample, Y_train=Y_sample,l=ls, sigma_f=sigma_f, sigma_y=noise)
+    mu, sigma = predict(X_s=X, X_train=X_sample, Y_train=Y_sample,l=ls, sigma_f=sigma_f, sigma_y=noise, return_std=True, return_cov=False)
+    mu_sample = predict(X_s=X_sample, X_train=X_sample, Y_train=Y_sample,l=ls, sigma_f=sigma_f, sigma_y=noise, return_std=False, return_cov=False)
     mu_sample_opt = jnp.max(mu_sample)
     improvement = mu.T - mu_sample_opt - xi
     z = improvement / (sigma + 1e-3)
     ei = improvement * norm.cdf(z) + sigma * norm.pdf(z)
     return ei
 
-def propose_location(acquisition, X, X_sample, Y_sample, bounds, ls=1.0, sigma_f=1.0, noise=1e-8, n_restarts=25):
-    '''
-    Proposes the next sampling point by optimizing the acquisition function.
-    
-    Args:
-        acquisition: Acquisition function.
-        X: Points at which EI shall be computed (m x d).
-        X_sample: Sample locations (n x d).
-        Y_sample: Sample values (n x 1).
-        gpr: A GaussianProcessRegressor fitted to samples.
+def jacobian(f: Callable) -> Callable:
+    return jit(jacrev(f))
 
-    Returns:
-        Location of the acquisition function maximum.
-    '''
-    dim = X_sample.shape[1]
-    min_val = 1
-    min_x = None
-    key = random.PRNGKey(42)
-    
-    def min_obj(X):
-        # Minimization objective is the negative acquisition function
-        return -acquisition(X.reshape(-1, dim), X_sample, Y_sample, ls=ls, sigma_f=ls, noise=noise).flatten()
-    
 
+@partial(jit, static_argnums=(6,7,8))
+def suggest_next(
+    key, 
+    X_sample, 
+    Y_sample, 
+    bounds, 
+    ls=1.0, 
+    sigma_f=1.0, 
+    noise=1e-8, 
+    n_seed=1000, 
+    lr=0.1, 
+    n_epochs=150):
+
+    key1, key2 = random.split(key, 2)
+    dim = bounds.shape[0]
+
+    domain = random.uniform(
+        key1, shape=(n_seed, dim), minval=bounds[:, 0], maxval=bounds[:, 1]
+    )
+
+    _acq = partial(expected_improvement, X_sample=X_sample, Y_sample=Y_sample, ls=ls, sigma_f=sigma_f, noise=noise, xi=0.01)
+
+    J = jacobian(lambda x: _acq(x.reshape(-1, dim)).reshape())
+    HS = vmap(lambda x: x + lr * J(x))
     
-    # Find the best optimum by starting from n_restart different random points.
-    for x0 in random.uniform(key, (n_restarts, dim), minval=bounds[:, 0], maxval=bounds[:, 1]):
-        res = minimize(min_obj, x0=x0, bounds=bounds, method='L-BFGS-B')        
-        if res.fun < min_val:
-            min_val = res.fun[0]
-            min_x = res.x           
-            
-    return min_x.reshape(-1, 1)
+    domain = lax.fori_loop(0, n_epochs, lambda _, d: HS(d), domain)
+    domain = jnp.clip(
+        domain.reshape(-1, dim), a_min=bounds[:, 0], a_max=bounds[:, 1]
+    )
+
+    ys = _acq(domain)
+    next_X = domain[ys.argmax()]
+    return next_X, key2
+
 
 def plot_approximation(mu, std, X, Y, X_sample, Y_sample, X_next=None, show_legend=False):
     plt.fill_between(X.ravel(), 
@@ -83,4 +99,4 @@ def plot_acquisition(X, Y, X_next, show_legend=False):
     plt.plot(X, Y, 'r-', lw=1, label='Acquisition function')
     plt.axvline(x=X_next, ls='--', c='k', lw=1, label='Next sampling location')
     if show_legend:
-        plt.legend() 
+        plt.legend()
