@@ -46,6 +46,23 @@ def expected_improvement(X:jax.Array, X_sample:jax.Array, Y_sample:jax.Array, ls
 def jacobian(f: Callable) -> Callable:
     return jit(jacrev(f))
 
+
+def replace_nan_values(arr: Array) -> Array:
+    """
+    Replaces the NaN values (if any) in arr with 0.
+
+    Parameters:
+    -----------
+    arr: The array where NaN is removed from.
+
+    Returns:
+    --------
+    The array with all the NaN elements replaced with 0.
+    """
+    # todo(alonfnt): Find a more robust solution.
+    return jnp.where(jnp.isnan(arr), 0, arr)
+
+
 @partial(jit, static_argnums=(1, 2))
 def extend_array(arr: Array, pad_width: int, axis: int) -> Array:
     pad_shape = [(0, 0)] * arr.ndim
@@ -81,7 +98,7 @@ def suggest_next(
     domain = jnp.clip(
         domain.reshape(-1, dim), a_min=bounds[:, 0], a_max=bounds[:, 1]
     )
-
+    domain = replace_nan_values(domain)
     ys = _acq(domain)
     next_X = domain[ys.argmax()]
     return next_X, key2
