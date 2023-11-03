@@ -14,12 +14,12 @@ class OptimizerParameters(NamedTuple):
     """
     Object holding the results of the optimization.
     """
-
     target: Union[Array, float]
     params: Array
     f: Callable
     params_all: Array
     target_all: Array
+
 
 def expected_improvement(X:jax.Array, X_sample:jax.Array, Y_sample:jax.Array, ls=1.0, sigma_f=1.0, noise=1e-8, xi=0.01):
     '''
@@ -46,6 +46,11 @@ def expected_improvement(X:jax.Array, X_sample:jax.Array, Y_sample:jax.Array, ls
 def jacobian(f: Callable) -> Callable:
     return jit(jacrev(f))
 
+@partial(jit, static_argnums=(1, 2))
+def extend_array(arr: Array, pad_width: int, axis: int) -> Array:
+    pad_shape = [(0, 0)] * arr.ndim
+    pad_shape[axis] = (0, pad_width)
+    return jnp.pad(arr, pad_shape, mode="edge")
 
 @partial(jit, static_argnums=(6,7,8))
 def suggest_next(
@@ -80,23 +85,3 @@ def suggest_next(
     ys = _acq(domain)
     next_X = domain[ys.argmax()]
     return next_X, key2
-
-
-def plot_approximation(mu, std, X, Y, X_sample, Y_sample, X_next=None, show_legend=False):
-    plt.fill_between(X.ravel(), 
-                    mu.ravel() + 1.96 * std, 
-                    mu.ravel() - 1.96 * std, 
-                    alpha=0.1) 
-    plt.plot(X, Y, 'y--', lw=1, label='Noise-free objective')
-    plt.plot(X, mu, 'b-', lw=1, label='Surrogate function')
-    plt.plot(X_sample, Y_sample, 'kx', mew=3, label='Noisy samples')
-    if X_next:
-        plt.axvline(x=X_next, ls='--', c='k', lw=1)
-    if show_legend:
-        plt.legend()
-        
-def plot_acquisition(X, Y, X_next, show_legend=False):
-    plt.plot(X, Y, 'r-', lw=1, label='Acquisition function')
-    plt.axvline(x=X_next, ls='--', c='k', lw=1, label='Next sampling location')
-    if show_legend:
-        plt.legend()

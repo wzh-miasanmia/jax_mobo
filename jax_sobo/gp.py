@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
-from jax import grad, jit, tree_util, vmap
+from collections import namedtuple
+from jax import grad, jit, tree_util, vmap, lax
 import matplotlib.pyplot as plt
 from jax.scipy.linalg import cholesky, solve_triangular
 from matplotlib import animation, cm
@@ -8,7 +9,7 @@ from jax.lax import fori_loop
 from typing import Tuple
 from functools import partial
 
-
+GP_parameters = namedtuple("GP_parameters", [ "lengthscale", "amplitude"])
 
 # Covariance matrix calculation
 def kernel(X1:jax.Array, X2:jax.Array, l=1.0, sigma_f=1.0):
@@ -70,63 +71,63 @@ def predict(X_s:jax.Array, X_train:jax.Array, Y_train:jax.Array, l=1.0, sigma_f=
         return mu_s
 
 
+def softplus(x):
+    return jnp.logaddexp(x, 0.0)
 
-def optimize_mll(initial_theta:jax.Array, X_train:jax.Array, Y_train:jax.Array, noise, num_steps, lr, method:str):
-    """
-    Optimize the negative log marginal likelihood for Gaussian Process Regression.
+def mll(params, X_train, Y_train, noise):
+    ls,amp = tree_util.tree_map(softplus, params)
+    K = kernel_jit(X_train, X_train, l=ls, sigma_f=amp) + \
+        noise**2 * jnp.eye(len(X_train))
+    L = cholesky(K)
+    S1 = solve_triangular(L, Y_train, lower=True)
+    S2 = solve_triangular(L.T, S1, lower=False)
+    mll =  jnp.sum(jnp.log(jnp.diag(L))) + \
+            0.5 * jnp.dot(Y_train, S2) + \
+            0.5 * len(X_train) * jnp.log(2*jnp.pi)
+    return mll
 
-    Parameters:
-    -----------
-    initial_theta : jax.Array
-        Initial values for the hyperparameters to be optimized.
-    X_train : jax.Array
-        Training locations (m x d).
-    Y_train : jax.Array
-        Training targets (m x 1).
-    noise : float
-        Known noise level of the training targets.
-    num_steps : int
-        Number of optimization steps to perform.
-    lr : float
-        Learning rate for the optimization.
+grad_fun = jit(grad(mll))
 
-    Returns:
-    --------
-    jax.Array
-        Optimized hyperparameters that minimize the negative log marginal likelihood.
-    """
+def optimize_mll(
+    params,
+    X_train:jax.Array, 
+    Y_train:jax.Array, 
+    momentums,
+    scales,
+    noise, 
+    num_steps: int = 20, 
+    lr: float = 0.01,
+):
+
     Y_train = Y_train.ravel()
 
-    def mll(theta):
-        K = kernel_jit(X_train, X_train, l=theta[0], sigma_f=theta[1]) + \
-            noise**2 * jnp.eye(len(X_train))
-        L = cholesky(K)
-        S1 = solve_triangular(L, Y_train, lower=True)
-        S2 = solve_triangular(L.T, S1, lower=False)
-        return jnp.sum(jnp.log(jnp.diag(L))) + \
-                0.5 * jnp.dot(Y_train, S2) + \
-                0.5 * len(X_train) * jnp.log(2*jnp.pi)
-    grad_fun = jit(grad(mll))
+    def train_step(
+        params, momentums, scales,
+    ):
+        grads = grad_fun(params, X_train, Y_train, noise)
+        momentums = tree_util.tree_map(
+            lambda m, g: 0.9 * m + 0.1 * g, momentums, grads
+        )
+        scales = tree_util.tree_map(
+            lambda s, g: 0.9 * s + 0.1 * g ** 2, scales, grads
+        )
+        params = tree_util.tree_map(
+            lambda p, m, s: p - lr * m / jnp.sqrt(s + 1e-5),
+            params,
+            momentums,
+            scales,
+        )
+        return params, momentums, scales
 
-    theta = initial_theta
-    momentums = jnp.zeros_like(theta)
-    scales = jnp.zeros_like(theta)
-    if method == 'SGD':
-        for _ in range(num_steps):
-            grads = grad_fun(theta)
+    params, momentums, scales = lax.fori_loop(
+        0,
+        num_steps,
+        lambda _, v: train_step(*v),
+        (params, momentums, scales),
+    )
 
-            momentums = 0.9 * momentums + 0.1 * grads
+    return params, momentums, scales
 
-            scales = 0.9 * scales + 0.1 * grads ** 2
-
-            theta -= lr * momentums / jnp.sqrt(scales + 1e-5)
-
-        return theta
-    
-    elif method == 'BFGS':
-        return 'BFGS is not finish yet'
-    else:
-        return 'Please choose a method correctly'
 
 
 
