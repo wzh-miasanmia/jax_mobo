@@ -1,6 +1,6 @@
-from bayex.acq import ACQ
-from bayex.optim import optim
-from bayex.screen import Log, show_results
+from bayesian_jax.acq import ACQ
+from bayesian_jax.optim import optim
+from bayesian_jax.screen import Log, show_results
 
 __version__ = "0.1.0"
 

@@ -4,8 +4,8 @@ from typing import Callable
 import jax.numpy as jnp
 from jax.tree_util import tree_map
 
-from bayex.optim import OptimizerParameters
-from bayex.types import Array
+from bayesian_jax.optim import OptimizerParameters
+from bayesian_jax.types import Array
 
 
 class Log(Enum):

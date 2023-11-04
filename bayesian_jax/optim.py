@@ -4,7 +4,7 @@ from typing import Callable, NamedTuple, Tuple, Union, Optional
 import jax.numpy as jnp
 from jax import jacrev, jit, lax, random, tree_map, vmap
 
-from bayex.acq import expected_improvement
+from bayex.acq import ACQ, select_acq
 from bayex.gp import DataTypes, GParameters, round_integers, train
 from bayex.types import Array
 
@@ -45,7 +45,6 @@ def replace_nan_values(arr: Array) -> Array:
 def suggest_next(
     key: Array,
     params: GParameters,
-    noise: float,
     x: Array,
     y: Array,
     bounds: Array,
@@ -87,7 +86,7 @@ def suggest_next(
         key1, shape=(n_seed, dim), minval=bounds[:, 0], maxval=bounds[:, 1]
     )
 
-    _acq = partial(acq, params=params, noise=noise, x=x, y=y, dtypes=dtypes)
+    _acq = partial(acq, params=params, x=x, y=y, dtypes=dtypes)
 
     J = jacobian(lambda x: _acq(x.reshape(-1, dim)).reshape())
     HS = vmap(lambda x: x + lr * J(x))
@@ -118,13 +117,12 @@ def _extend_array(arr: Array, pad_width: int, axis: int) -> Array:
 
 def optim(
     f: Callable,
-    noise: float,
     constrains: dict,
     seed: int = 42,
     n_init: int = 5,
     n: int = 10,
     ctypes: Optional[dict] = None,
-    acq=expected_improvement,
+    acq: ACQ = ACQ.EI,
     **acq_params: dict,
 ) -> OptimizerParameters:
     """
@@ -184,6 +182,7 @@ def optim(
 
     # Initialize the GP parameters
     params = GParameters(
+        noise=jnp.zeros((1, 1)) - 5.0,
         amplitude=jnp.zeros((1, 1)),
         lengthscale=jnp.zeros((1, dim)),
     )

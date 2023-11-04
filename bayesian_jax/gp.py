@@ -8,7 +8,7 @@ from jax.scipy.linalg import cholesky, solve_triangular
 
 from bayex.types import Array
 
-GParameters = namedtuple("GParameters", ["amplitude", "lengthscale"])
+GParameters = namedtuple("GParameters", ["noise", "amplitude", "lengthscale"])
 DataTypes = namedtuple("DataTypes", ["integers"])
 
 
@@ -27,7 +27,7 @@ def softplus(x: Array) -> Array:
 
 
 def exp_quadratic(x1: Array, x2: Array, ls: Array) -> Array:
-    return jnp.exp(-jnp.sum((x1 - x2) ** 2 / (2 * ls ** 2)))
+    return jnp.exp(-jnp.sum((x1 - x2) ** 2 / ls ** 2))
 
 
 def round_integers(arr: Array, dtypes: Union[DataTypes, None]) -> Array:
@@ -46,7 +46,6 @@ def round_integers(arr: Array, dtypes: Union[DataTypes, None]) -> Array:
 
 def gaussian_process(
     params: GParameters,
-    noise: float,
     x: Array,
     y: Array,
     dtypes: Optional[DataTypes] = None,
@@ -62,7 +61,7 @@ def gaussian_process(
     # Rounding integer values before computing the covariance matrices.
     x = round_integers(x, dtypes)
 
-    amp, ls = tree_util.tree_map(softplus, params)
+    noise, amp, ls = tree_util.tree_map(softplus, params)
     kernel = partial(exp_quadratic, ls=ls)
 
     # Normalization of measurements
