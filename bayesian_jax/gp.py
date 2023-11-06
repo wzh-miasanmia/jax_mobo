@@ -6,7 +6,7 @@ from jax import grad, jit, lax, tree_util, vmap
 import jax.numpy as jnp
 from jax.scipy.linalg import cholesky, solve_triangular
 
-from bayex.types import Array
+from bayesian_jax.types import Array
 
 GParameters = namedtuple("GParameters", ["noise", "amplitude", "lengthscale"])
 DataTypes = namedtuple("DataTypes", ["integers"])

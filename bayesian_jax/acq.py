@@ -4,8 +4,8 @@ from typing import Callable, Union
 
 from jax.scipy.stats import norm
 
-from bayex.gp import GParameters, predict
-from bayex.types import Array
+from bayesian_jax.gp import GParameters, predict
+from bayesian_jax.types import Array
 
 
 class ACQ(Enum):

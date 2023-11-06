@@ -4,10 +4,11 @@ from typing import Callable, NamedTuple, Tuple, Union, Optional
 import jax.numpy as jnp
 from jax import jacrev, jit, lax, random, tree_map, vmap
 
-from bayex.acq import ACQ, select_acq
-from bayex.gp import DataTypes, GParameters, round_integers, train
-from bayex.types import Array
-
+from bayesian_jax.acq import ACQ, select_acq
+from bayesian_jax.gp import DataTypes, GParameters, round_integers, train
+from bayesian_jax.types import Array
+import matplotlib.pyplot as plt
+import numpy as np
 
 class OptimizerParameters(NamedTuple):
     """
@@ -20,6 +21,16 @@ class OptimizerParameters(NamedTuple):
     params_all: Array
     target_all: Array
 
+def plot_approximation(bounds, X_sample, Y_sample, X_next, ls, amp, noise):
+    mu, std = gp.predict(bounds, X_sample, Y_sample, l=ls, sigma_f=amp, sigma_y=noise,return_std=True, return_cov=False)
+    plt.fill_between(bounds.ravel(), 
+                     mu.ravel() + 1.96 * std, 
+                     mu.ravel() - 1.96 * std, 
+                     alpha=0.1) 
+    plt.plot(bounds, mu, 'b-', lw=1, label='Surrogate function')
+    plt.plot(X_sample, Y_sample, 'kx', mew=3, label='Noisy samples')
+    plt.axvline(x=X_next, ls='--', c='k', lw=1)
+    plt.legend()
 
 def jacobian(f: Callable) -> Callable:
     return jit(jacrev(f))
@@ -121,6 +132,8 @@ def optim(
     seed: int = 42,
     n_init: int = 5,
     n: int = 10,
+    plot_figure: bool = False,
+    path: str = None, 
     ctypes: Optional[dict] = None,
     acq: ACQ = ACQ.EI,
     **acq_params: dict,
@@ -189,14 +202,27 @@ def optim(
     momentums = tree_map(lambda x: x * 0, params)
     scales = tree_map(lambda x: x * 0 + 1, params)
 
+    if plot_figure:
+        plt.figure(figsize=(12, n * 3))
+        plt.subplots_adjust(hspace=0.4)
+
     for idx in range(n_init, n + n_init):
         params, momentums, scales = train(
             X, Y, params, momentums, scales, dtypes
         )
         max_params, key = suggest_next(key, params, X, Y, bounds, dtypes, _acq)
+
+        # visualization for surrogate function, samples and acquisition fucntion
+        if plot_figure:
+            plt.subplot(n, 2, 2 * (idx-n_init) + 1)
+            X_s = np.arange(bounds[:, 0], bounds[:, 1], 0.01).reshape(-1, 1)
+            plot_approximation(X_s, X, Y, next_X, l_opt, sigma_f_opt, noise)
+            plt.title(f'Iteration {idx-n_init+1}')
+        
         X = X.at[idx, ...].set(max_params)  # type: ignore
         Y = Y.at[idx].set(f(*max_params))  # type: ignore
-
+    if plot_figure:
+        plt.savefig(path)
     best_target = float(Y.max())
     best_params = {k: v for (k, v) in zip(constrains.keys(), X[Y.argmax()])}
     optimizer_params = OptimizerParameters(
