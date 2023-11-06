@@ -42,7 +42,7 @@ def show_sampling(
     col_template = "{:^" + str(max_width) + "g}"
     row_template = col_template * (var_count + 2)
 
-    # I doubt whether is should be better to print in sorted mode
+    # I doubt whether it should be better to print in sorted mode
     # or is it better to show in the order they have been sampled
     y_prev = -jnp.inf
     for i, (xi, yi) in enumerate(zip(x, y)):
