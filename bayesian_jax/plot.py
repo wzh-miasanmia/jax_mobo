@@ -1,9 +1,7 @@
 import plotly.graph_objects as go
 
-
-def plot3d(res, n_init, n):
-
-    # 数据
+def plot2d(res, n_init, n):
+    # data
     n_total = 1 + n + n_init
     sample = list(range(1, 26))
     target = res.target_all
@@ -11,7 +9,7 @@ def plot3d(res, n_init, n):
     y = res.params_all[:,1]
     x = list(x)
     y = list(y) 
-    # 创建三维散点图
+    # create 2d scatter
     fig = go.Figure(data=[go.Scatter3d(
         x=x,
         y=y,
@@ -19,26 +17,65 @@ def plot3d(res, n_init, n):
         mode='markers',
         marker=dict(
             size=5,
-            color=sample,  # 以不同的样本编号为颜色
-            colorscale='Viridis',  # 使用Viridis颜色映射
+            color=sample,  
+            colorscale='Viridis',  # Using Viridis Color Mapping
             opacity=0.8
         ),
-        text=sample  # 鼠标悬停时显示样本编号
+        text=sample  # Display sample number on mouse hover
     )])
 
-    # 设置图表布局
+    # Setting the Chart Layout
     fig.update_layout(
         scene=dict(
             xaxis_title='X',
             yaxis_title='Y',
             zaxis_title='Target'
         ),
-        title='Three-dimensional Scatter Plot',
+        title='Two-dimensional Scatter Plot',
         width=800,
         height=600
     )
 
-    # 显示图表
     fig.show()
 
+def plot3d(res, n_init, n):
+    # data
+    n_total = 1 + n + n_init
+    sample = list(range(1, n_total + 1))
+    target = res.target_all
+    x = res.params_all[:, 0]
+    y = res.params_all[:, 1]
+    z = res.params_all[:, 2]
+    x = list(x)
+    y = list(y) 
+    z = list(z)
 
+    # create 3d scatter with color mapping
+    fig = go.Figure(data=[go.Scatter3d(
+        x=x,
+        y=y,
+        z=z,
+        mode='markers',
+        marker=dict(
+            size=5,
+            color=target,  
+            colorscale='Viridis',  
+            colorbar=dict(title='Target'),  
+            opacity=0.8
+        ),
+        text=sample  # Display sample number on mouse hover
+    )])
+
+    # Setting the Chart Layout
+    fig.update_layout(
+        scene=dict(
+            xaxis_title='X',
+            yaxis_title='Y',
+            zaxis_title='Z',
+        ),
+        title='Three-dimensional Scatter Plot with Color Mapping',
+        width=800,
+        height=600
+    )
+
+    fig.show()
