@@ -19,6 +19,7 @@ def plot2d(res, n_init, n):
             size=5,
             color=sample,  
             colorscale='Viridis',  # Using Viridis Color Mapping
+            colorbar=dict(title='iterations'),  
             opacity=0.8
         ),
         text=sample  # Display sample number on mouse hover
