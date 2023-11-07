@@ -45,7 +45,7 @@ def optim_process(
 
     # Initial settings
     params = GP_parameters(
-        lengthscale=jnp.zeros((1, dim)),
+        lengthscale=jnp.zeros((1, 1)),
         amplitude=jnp.zeros((1, 1)),
     )
     momentums = tree_map(lambda x: x * 0, params)
