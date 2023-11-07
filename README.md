@@ -25,10 +25,10 @@ sobo_demo:
 Code written by myself to complete the Bayesian optimization process using jax, robustness is very low, can't use too low a noise, problems with multidimensionality, still needs improvement
 
 
-## how to use
+## usage
 ```python
 conda activate maenv
 cd wzhmiasanmia/ma_workspace/jax_mobo/
 ```
 
-
+The bayex_test.ipynb in the root directory shows the use of this optimization algorithm
