@@ -18,11 +18,11 @@ Plan to proceed:
 bayesian_jax:
 Reference to the completed package on github has been changed to include the ability to draw 2d and 3d graphics
 
-jax_learn:
-Files to learn JAX
-
 sobo_demo:
-Code written by myself to complete the Bayesian optimization process using jax, robustness is very low, can't use too low a noise, problems with multidimensionality, still needs improvement
+Code written by zihao to complete the Bayesian optimization process using jax, robust problem still have: can't use too low a noise, problems with multidimensionality, to improve
+
+mobo_learn:
+learn how to implement mobo method, according to botorch
 
 
 ## usage

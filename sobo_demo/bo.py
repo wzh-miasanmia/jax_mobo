@@ -98,7 +98,7 @@ def suggest_next(
     domain = jnp.clip(
         domain.reshape(-1, dim), a_min=bounds[:, 0], a_max=bounds[:, 1]
     )
-    domain = replace_nan_values(domain)
+    # domain = replace_nan_values(domain)
     ys = _acq(domain)
     next_X = domain[ys.argmax()]
     return next_X, key2
