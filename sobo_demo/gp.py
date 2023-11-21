@@ -128,8 +128,17 @@ def optimize_mll(
 
     return params, momentums, scales
 
-
-
+from jaxopt import ScipyMinimize # just need to consider about it cause not good
+def optim_jaxopt(
+    params,
+    X_train:jax.Array, 
+    Y_train:jax.Array,
+    noise):
+    objective_function = partial(mll, X_train=X_train, Y_train=Y_train, noise=noise)
+    scipy_minimize = ScipyMinimize(fun=objective_function, method='BFGS', tol=1e-6)
+    x0 = jnp.array([params.lengthscale, params.amplitude])
+    result = scipy_minimize.run(x0)
+    return result.params
 
 
 ## Plots the results ##

@@ -47,7 +47,7 @@ def jacobian(f: Callable) -> Callable:
     return jit(jacrev(f))
 
 
-def replace_nan_values(arr: Array) -> Array:
+def replace_nan_values(arr: Array, domain_min, domain_max, key) -> Array:
     """
     Replaces the NaN values (if any) in arr with 0.
 
@@ -59,8 +59,11 @@ def replace_nan_values(arr: Array) -> Array:
     --------
     The array with all the NaN elements replaced with 0.
     """
-    # todo(alonfnt): Find a more robust solution.
-    return jnp.where(jnp.isnan(arr), 0, arr)
+    key1, key2 = random.split(key, 2)
+    nan_mask = jnp.isnan(arr)
+    random_values = random.uniform(key1, shape=arr.shape, minval=domain_min, maxval=domain_max)
+    result = jnp.where(nan_mask, random_values, arr)
+    return result, key2
 
 
 @partial(jit, static_argnums=(1, 2))
@@ -98,7 +101,7 @@ def suggest_next(
     domain = jnp.clip(
         domain.reshape(-1, dim), a_min=bounds[:, 0], a_max=bounds[:, 1]
     )
-    # domain = replace_nan_values(domain)
+    domain, key = replace_nan_values(domain, bounds[:, 0], bounds[:, 1], key2)
     ys = _acq(domain)
     next_X = domain[ys.argmax()]
-    return next_X, key2
+    return next_X, key
