@@ -19,11 +19,14 @@ bayesian_jax:
 Reference to the completed package on github has been changed to include the ability to draw 2d and 3d graphics
 
 sobo_demo:
-Code written by zihao to complete the Bayesian optimization process using jax, robust problem still have: can't use too low a noise, problems with multidimensionality, to improve
+Code written by zihao to complete the Bayesian optimization process using jax
+noramlization problem still need to solve
 
 mobo_learn:
 learn how to implement mobo method, according to botorch
 
+mobo_demo:
+Code written by zihao to complete the multi-objective bayesian optimization process using jax
 
 ## usage
 ```python
