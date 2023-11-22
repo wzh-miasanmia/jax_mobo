@@ -25,8 +25,8 @@ noramlization problem still need to solve
 mobo_learn:
 learn how to implement mobo method, according to botorch
 
-mobo_demo:
-Code written by zihao to complete the multi-objective bayesian optimization process using jax
+mobo_np:
+Code written by zihao to complete the multi-objective bayesian optimization process using numpy
 
 ## usage
 ```python
