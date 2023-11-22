@@ -25,6 +25,12 @@ def plot_approximation(bounds, X_sample, Y_sample, X_next, gpr):
     plt.axvline(x=X_next, ls='--', c='k', lw=1)
     plt.legend()
 
+def normalize(X, bounds):
+    return (X - bounds[:, 0]) / (bounds[:, 1] - bounds[:, 0])
+
+
+def unnormalize(X, bounds):
+    return X * (bounds[:, 1] - bounds[:, 0]) + bounds[:, 0]
 
 def optim_process(
     f,
@@ -61,11 +67,21 @@ def optim_process(
         plt.figure(figsize=(12, n_iter * 3))
         plt.subplots_adjust(hspace=0.4)
 
+
+    # normalization
+    bounds_normal = np.array([[0.0, 1.0]] * dim)
+
     # optimize loop
     for i in range(n_iter):
+        # normalization
+        X_sample_normal = normalize(X_sample, bounds)
 
         # Obtain next sampling point from the acquisition function(expected_improvement)
-        X_next = propose_location(acq, X_sample, Y_sample, gpr, bounds)
+        X_next_normal = propose_location(acq, X_sample_normal, Y_sample, gpr, bounds_normal)
+
+        # de-normalization
+        X_next = unnormalize(X_next_normal, bounds)
+
         Y_next = f(X_next, noise)
         # visualization for surrogate function, samples and acquisition fucntion
         if plot_figure:
