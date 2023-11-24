@@ -14,8 +14,8 @@ class OptimizerParameters(NamedTuple):
     params_all: np.ndarray
     target_all: np.ndarray
 
-def plot_approximation(bounds, X_sample, Y_sample, X_next, gpr):
-    mu, std = gpr.predict(X_sample, return_std=True)
+def plot_approximation_1d(bounds, X_sample, Y_sample, X_next, gpr):
+    mu, std = gpr.predict(bounds, return_std=True)
     plt.fill_between(bounds.ravel(), 
                      mu.ravel() + 1.96 * std, 
                      mu.ravel() - 1.96 * std, 
@@ -28,7 +28,6 @@ def plot_approximation(bounds, X_sample, Y_sample, X_next, gpr):
 def normalize(X, bounds):
     return (X - bounds[:, 0]) / (bounds[:, 1] - bounds[:, 0])
 
-
 def unnormalize(X, bounds):
     return X * (bounds[:, 1] - bounds[:, 0]) + bounds[:, 0]
 
@@ -39,7 +38,7 @@ def optim_process(
     acq = expected_improvement,
     n_init = 5, # Number of initial evaluations before suggesting optimized samples.
     n_iter = 20, # Number of sampling iterations
-    plot_figure = False,
+    normalization = False,
 ):
     bounds = np.asarray(list(constrains.values()))
     gpr = GaussianProcessRegressor(sigma_y=noise)
@@ -61,7 +60,7 @@ def optim_process(
     gpr.fit(X_sample, Y_sample)
     gpr.optim_np()
 
-    if plot_figure:
+    if dim == 1:
         plt.figure(figsize=(12, n_iter * 3))
         plt.subplots_adjust(hspace=0.4)
 
@@ -70,22 +69,24 @@ def optim_process(
     bounds_normal = np.array([[0.0, 1.0]] * dim)
 
     # optimize loop
-    for i in range(n_iter):
-        # normalization
-        X_sample_normal = normalize(X_sample, bounds)
-
-        # Obtain next sampling point from the acquisition function(expected_improvement)
-        X_next_normal = propose_location(acq, X_sample_normal, Y_sample, gpr, bounds_normal)
-
-        # de-normalization
-        X_next = unnormalize(X_next_normal, bounds)
+    for i in range(n_init, n_iter+n_init):
+        if normalization:
+            # normalization
+            X_sample_normal = normalize(X_sample, bounds)
+            # Obtain next sampling point from the acquisition function(expected_improvement)
+            X_next_normal = propose_location(acq, X_sample_normal, Y_sample, gpr, bounds_normal)
+            # de-normalization
+            X_next = unnormalize(X_next_normal, bounds)
+        else:
+            # Obtain next sampling point from the acquisition function(expected_improvement)
+            X_next = propose_location(acq, X_sample, Y_sample, gpr, bounds)
 
         Y_next = f(X_next if dim == 1 else X_next.T)
         # visualization for surrogate function, samples and acquisition fucntion
-        if plot_figure:
+        if dim == 1:
             plt.subplot(n_iter, 2, 2 * (i-n_init) + 1)
             X_s = np.arange(bounds[:, 0], bounds[:, 1], 0.01).reshape(-1, 1)
-            plot_approximation(X_s, X_sample, Y_sample, X_next, gpr)
+            plot_approximation_1d(X_s, X_sample, Y_sample, X_next, gpr)
             plt.title(f'Iteration {i-n_init+1}')
 
         # Add sample to previous samples
