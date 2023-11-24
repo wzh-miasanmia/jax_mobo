@@ -6,9 +6,12 @@ The purpose of this repo is to establish the use of JAX to complete a multi-obje
 The project is currently in its early stages and progress is as follows:
 
 Completed:
-- Gaussian process using JAX including the calculation of kernel, postrior and marginal likelihood function
-- Implemented encapsulation: GaussianProcessRegressor, with methods like fit, optim, predict, etc.(not work with jax, think about it later)
-- Single-objective Bayesian optimization
+- Gaussian process:
+    - using JAX/numpy including the calculation of kernel, postrior and marginal likelihood function
+    - Implemented encapsulation: GaussianProcessRegressor(class form) using JAX /numpy, with methods like fit, optim, predict, etc
+- Single-objective Bayesian optimization:
+    - with numpy
+    - with JAX: do not have a proper minimize function
 
 Plan to proceed:
 
@@ -28,10 +31,16 @@ learn how to implement mobo method, according to botorch
 mobo_np:
 Code written by zihao to complete the multi-objective bayesian optimization process using numpy
 
+
 ## usage
 ```python
 conda activate maenv
-cd wzhmiasanmia/ma_workspace/jax_mobo/
+cd ./jax_mobo/
 ```
+- if you would like to have a test for sobo in numpy, try:
+```python
+cd ./jax_mobo/mobo_np
+```
+- run sobo_1d.ipynb and you will get the result with a automatically generated plots documenting the selection of each point and an image of the proxy model
+- run sobo_2d.ipynb and you will get the result, then use plot funciton to have a look at the result points.
 
-The bayex_test.ipynb in the root directory shows the use of this optimization algorithm
