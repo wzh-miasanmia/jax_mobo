@@ -62,4 +62,4 @@ def propose_location(acquisition, X_sample, Y_sample, gpr, bounds, n_restarts=25
             min_val = res.fun
             min_x = res.x           
             
-    return min_x.reshape(-1, 1)
+    return min_x

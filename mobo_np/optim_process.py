@@ -38,7 +38,7 @@ def optim_process(
     noise,
     acq = expected_improvement,
     n_init = 5, # Number of initial evaluations before suggesting optimized samples.
-    n_iter = 10, # Number of sampling iterations
+    n_iter = 20, # Number of sampling iterations
     plot_figure = False,
 ):
     bounds = np.asarray(list(constrains.values()))
@@ -51,10 +51,8 @@ def optim_process(
         size=(n_init, dim),
     )
     X = X_init
-    if dim == 1:
-        Y_init = f(X_init)
-    elif dim == 2:
-        Y_init = f(X_init[:, 0], X_init[:, 1])
+    Y_init = f(X if dim == 1 else X.T)
+
     
     # Initialize samples
     X_sample = X_init
@@ -82,7 +80,7 @@ def optim_process(
         # de-normalization
         X_next = unnormalize(X_next_normal, bounds)
 
-        Y_next = f(X_next, noise)
+        Y_next = f(X_next if dim == 1 else X_next.T)
         # visualization for surrogate function, samples and acquisition fucntion
         if plot_figure:
             plt.subplot(n_iter, 2, 2 * (i-n_init) + 1)
@@ -92,7 +90,7 @@ def optim_process(
 
         # Add sample to previous samples
         X_sample = np.vstack((X_sample, X_next))
-        Y_sample = np.vstack((Y_sample, Y_next))
+        Y_sample = np.append(Y_sample, Y_next)
         gpr.fit(X_sample, Y_sample)
         gpr.optim_np()
 
