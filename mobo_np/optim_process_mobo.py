@@ -32,27 +32,24 @@ def optim_process(
     X = X_init
     Y_sample_multi = f_multi(X if dim == 1 else X.T) # [n_f, n_samples, 1]
     n_f = Y_sample_multi.shape[0] # number of functions
-    gpr_list = [GaussianProcessRegressor() for _ in range(n_f)]
+    gpr_list = [GaussianProcessRegressor(sigma_y=noise) for _ in range(n_f)]
 
-    
     # Initialize samples
     X_sample = X_init
-    for i, (Y_sample, gpr) in enumerate(zip(Y_sample_multi, gpr_list)):
+    for _, (Y_sample, gpr) in enumerate(zip(Y_sample_multi, gpr_list)):
         gpr.fit(X_sample, Y_sample)
         gpr.optim_np()
 
     # normalization
     bounds_normal = np.array([[0.0, 1.0]] * dim)
 
-    # # define ref_point according to Appendix A.2
-    # min_values = np.min(Y_sample_multi, axis=1)
-    # max_values = np.max(Y_sample_multi, axis=1)
-    # ref_point = (min_values + max_values) / 2
-    # choose the worst point first instead of above method
-    ref_point = np.min(Y_sample_multi, axis=1, keepdims=True).squeeze()
+    # define ref_point according to Appendix A.2
+    min_values = np.min(Y_sample_multi, axis=1)
+    max_values = np.max(Y_sample_multi, axis=1)
+    ref_point = ((min_values + max_values) / 2).squeeze()
+    # choose the worst point instead
+    # ref_point = np.min(Y_sample_multi, axis=1, keepdims=True).squeeze()
 
-
-    
     # optimize loop
     for i in range(n_init, n_iter+n_init):
         if normalization:
@@ -66,20 +63,22 @@ def optim_process(
             # Obtain next sampling point from the acquisition function(expected_improvement)
             X_next = propose_location(acq, X_sample, Y_sample_multi, gpr_list, bounds, ref_point)
 
-        Y_next = f_multi(X_next if dim == 1 else X_next.T)
+        Y_next = f_multi(X_next if dim == 1 else X_next.T) # TODO: change this to numerical simulation
 
         # Add sample to previous samples
         X_sample = np.vstack((X_sample, X_next))
-        Y_sample_list = [np.append(Y, Y_new) for Y, Y_new in zip(Y_sample_list, Y_next)] # not sure about dimension
-        
-        gpr_list = [GaussianProcessRegressor().fit(X_sample, Y) for Y in Y_sample_list]
-        for gpr in gpr_list:
-            gpr.optim_np() 
-        
+        Y_sample_multi = [np.append(Y, Y_new) for Y, Y_new in zip(Y_sample_multi, Y_next)] # not sure about dimension
 
-    ## TODO: should add a convergence check according to the paper function 24
-    ## 计算每次迭代后得到的HV，以进行最终的收敛检查！
-    mu_sample = gpr.predict(X_sample)
-    pareto = is_non_dominated_np(mu_sample)
-    
+        # update GP model parameters
+        for _, (Y_sample, gpr) in enumerate(zip(Y_sample_multi, gpr_list)):
+            gpr.fit(X_sample, Y_sample)
+            gpr.optim_np()
+            
+    ## TODO: add a convergence check according to the paper function 24
+    mu_sample_list = []
+    for gpr in gpr_list:
+        mu_sample_list.append(gpr.predict(X_sample))
+    mu_sample = (np.vstack(mu_sample_list)).T # (n_samples, n_functions)
+    pareto_mask = is_non_dominated_np(mu_sample) # change it
+    pareto = mu_sample[pareto_mask]
     return pareto, ref_point

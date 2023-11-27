@@ -1,6 +1,6 @@
 import numpy as np
 
-def is_non_dominated_np(Y, deduplicate=True):
+def is_non_dominated_np(Y, deduplicate=True): # expected Y as [n_points, n_functions]
     Y1 = np.expand_dims(Y, axis=-3) # [1, n, m]
     Y2 = np.expand_dims(Y, axis=-2) # [n, 1, m]
     dominates = (Y1 >= Y2).all(axis=-1) & (Y1 > Y2).any(axis=-1) # default is maximization problem

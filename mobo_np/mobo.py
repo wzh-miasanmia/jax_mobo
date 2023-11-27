@@ -41,10 +41,10 @@ def expected_hypervolume_improvement(X, X_sample, Y_sample_multi, gpr_list, ref_
     
     # calculate ehvi
     improvement = HV_new - HV_previous
-    Z = improvement / np.column_stack(sigma_list)
-    ehvi = improvement * norm.cdf(Z) + np.column_stack(sigma_list) * norm.pdf(Z)
-    ehvi[np.column_stack(sigma_list) == 0.0] = 0.0 # MUST BE a scalar value, need to consider
-
+    sigma_aggregated = np.linalg.norm(np.column_stack(sigma_list))
+    Z = improvement / sigma_aggregated
+    ehvi = improvement * norm.cdf(Z) + sigma_aggregated * norm.pdf(Z)
+    # ehvi[sigma_aggregated == 0.0] = 0.0
     return ehvi
 
 def propose_location(acquisition, X_sample, Y_sample_multi, gpr_list, bounds, ref_point, n_restarts=25):
