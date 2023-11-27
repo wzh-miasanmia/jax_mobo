@@ -12,7 +12,7 @@ def schaffer_function_n1_multiobjective(x):
     """
     f1 = x**2
     f2 = (x - 2)**2
-    return np.array([f1, f2])
+    return np.array([-f1, -f2])
 
 def kursawe_function(x):
     """

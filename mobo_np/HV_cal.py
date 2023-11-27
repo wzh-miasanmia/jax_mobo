@@ -25,7 +25,6 @@ class Node:
         self.area = np.zeros(m, dtype=dtype)
         self.volume = np.zeros_like(self.area)
 
-
 class MultiList:
     r"""A special data structure used in hypervolume computation.
 
@@ -99,7 +98,6 @@ class MultiList:
             node.prev[i].next[i] = node
             node.next[i].prev[i] = node
         bounds[...] = np.minimum(bounds, node.data)
-        
 
 class Hypervolume:
     def __init__(self, ref_point):
@@ -107,7 +105,7 @@ class Hypervolume:
         self._ref_point = -ref_point
 
     def compute(self, pareto_Y):
-        pareto_Y = -pareto_Y
+        pareto_Y = - pareto_Y
         better_than_ref = (pareto_Y <= self._ref_point).all(axis=-1)
         pareto_Y = pareto_Y[better_than_ref]
         pareto_Y = pareto_Y - self._ref_point
@@ -275,6 +273,7 @@ def sort_by_dimension(nodes: List[Node], i: int) -> None:
     decorated.sort()
     # write back to original list
     nodes[:] = [node for (_, _, node) in decorated]
+
 
 def plot_pareto_hv(pareto_Y, ref_point):
     # Compute Hypervolume

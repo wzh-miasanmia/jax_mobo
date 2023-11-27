@@ -5,52 +5,57 @@ from math import inf
 import numpy as np
 from scipy.stats import norm
 from pareto_cal import is_non_dominated_np
+from HV_cal import Hypervolume, plot_pareto_hv
 
-
-def expected_improvement(X, X_sample, Y_sample, gpr:GaussianProcessRegressor):
+def expected_hypervolume_improvement(X, X_sample, Y_sample_multi, gpr_list, ref_point):
     '''
-    Computes the EI at points X based on existing samples X_sample
-    and Y_sample using a Gaussian process surrogate model.
+    Computes the EHVI at points X based on existing samples X_sample
+    and Y_sample using a list of Gaussian process surrogate models.
     
     Args:
-        X: Points at which EI shall be computed (m x d).
+        X: Points at which EHVI shall be computed (m x d).
         X_sample: Sample locations (n x d).
-        Y_sample: Sample values (n x f).
-        gpr: A GaussianProcessRegressor fitted to samples. An instance of the GaussianProcessRegressor class from scikit-learn, already fitted to the X_sample and Y_sample.
-        xi: Exploitation-exploration trade-off parameter.
-    
+        Y_sample_multi: Sample values (n x f).
+        gpr_list: A list of GaussianProcessRegressor fitted to samples.
+        ref_point: Reference point to calculate hypervolume
     Returns:
         Expected improvements at points X.
     '''
-    mu, sigma = gpr.predict(X, return_std=True)
-    mu_sample = gpr.predict(X_sample)
-
-
-    new_points = np.stack(mu, mu_sample)
-    new_pareto = is_non_dominated_np(new_points)
+    # definition of hypervolume
+    HV = Hypervolume(ref_point)
     
-    previous_points = mu_sample - sigma
-    previous_pareto = is_non_dominated_np(previous_points)
+    # previous pareto and hypervolume
+    mu_sample_list = [gpr.predict(X_sample) for gpr in gpr_list]
+    previous_points = np.column_stack(mu_sample_list)
+    previous_pareto_mask = is_non_dominated_np(previous_points)
+    previous_pareto = previous_points[previous_pareto_mask]
+    HV_previous = HV.compute(previous_pareto)
     
-    ## Todo: definie HV
-    HV = 1
+    # new pareto and hypervolume
+    mu_list, sigma_list = zip(*[gpr.predict(X, return_std=True) for gpr in gpr_list])
+    new_point = np.column_stack(mu_list)
+    new_points = np.vstack((new_point, previous_points))
+    new_pareto_mask = is_non_dominated_np(new_points)
+    new_pareto = new_points[new_pareto_mask]
+    HV_new = HV.compute(new_pareto)
     
-    improvement = HV(previous_pareto) - HV(previous_points)
-    Z = improvement / sigma
-    ei = improvement * norm.cdf(Z) + sigma * norm.pdf(Z)
-    ei[sigma == 0.0] = 0.0
+    # calculate ehvi
+    improvement = HV_new - HV_previous
+    Z = improvement / np.column_stack(sigma_list)
+    ehvi = improvement * norm.cdf(Z) + np.column_stack(sigma_list) * norm.pdf(Z)
+    ehvi[np.column_stack(sigma_list) == 0.0] = 0.0 # MUST BE a scalar value, need to consider
 
-    return ei
+    return ehvi
 
-def propose_location(acquisition, X_sample, Y_sample, gpr, bounds, n_restarts=25):
+def propose_location(acquisition, X_sample, Y_sample_multi, gpr_list, bounds, ref_point, n_restarts=25):
     '''
     Proposes the next sampling point by optimizing the acquisition function.
     
     Args:
         acquisition: Acquisition function.
         X_sample: Sample locations (n x d).
-        Y_sample: Sample values (n x 1).
-        gpr: A GaussianProcessRegressor fitted to samples.
+        Y_sample_multi: Sample values (n x f).
+        gpr_list: A list of GaussianProcessRegressor fitted to samples.
 
     Returns:
         Location of the acquisition function maximum.
@@ -61,7 +66,7 @@ def propose_location(acquisition, X_sample, Y_sample, gpr, bounds, n_restarts=25
     
     def min_obj(X):
         # Minimization objective is the negative acquisition function
-        return -acquisition(X.reshape(-1, dim), X_sample, Y_sample, gpr).flatten()
+        return -acquisition(X.reshape(-1, dim), X_sample, Y_sample_multi, gpr_list, ref_point).flatten()
     
     # Find the best optimum by starting from n_restart different random points.
     for x0 in np.random.uniform(bounds[:, 0], bounds[:, 1], size=(n_restarts, dim)):
