@@ -12,10 +12,14 @@ Completed:
 - Single-objective Bayesian optimization:
     - with numpy
     - with JAX: do not have a proper minimize function
+- Multi-objective Bayesian optimization
+    - with numpy
+    - EHVI method: HV calculation using Dimension Sweep Algorithm
 
 Plan to proceed:
+- multi-objective Bayesian optimization with convergence checking
+- combined with numerical simulation
 
-- Multi-objective Bayesian optimization
 
 ## details
 bayesian_jax:
@@ -43,4 +47,3 @@ cd ./jax_mobo/mobo_np
 ```
 - run sobo_1d.ipynb and you will get the result with a automatically generated plots documenting the selection of each point and an image of the proxy model
 - run sobo_2d.ipynb and you will get the result, then use plot funciton to have a look at the result points.
-
