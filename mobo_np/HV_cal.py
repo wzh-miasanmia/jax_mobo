@@ -249,7 +249,6 @@ class Hypervolume:
             else:
                 self._plot_recursive(i - 1, n_pareto, bounds, ref_point)
 
-
     def _initialize_multilist(self, pareto_Y):
         m = pareto_Y.shape[-1]
         nodes = [
@@ -297,8 +296,8 @@ def plot_pareto_hv(pareto_Y, ref_point):
         ax.set_ylabel("Objective 2")
         ax.set_zlabel("Objective 3")
 
-    # Plot Hypervolume
-    hv.plot(ref_point, pareto_Y)
+    # Plot Hypervolume TODO: try a way to visualize hypervolume
+    # hv.plot(ref_point, pareto_Y)
 
     # Display Hypervolume
     plt.title(f'Hypervolume: {hypervolume_value:.4f}')
