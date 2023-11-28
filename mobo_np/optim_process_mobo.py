@@ -11,6 +11,19 @@ def normalize(X, bounds):
 def unnormalize(X, bounds):
     return X * (bounds[:, 1] - bounds[:, 0]) + bounds[:, 0]
 
+def from_X_calculate_HV(X_sample, gpr_list, ref_point):
+    mu_sample_list = []
+    for gpr in gpr_list:
+        mu_sample = gpr.predict(X_sample).reshape(-1) # (n_samples,)
+        mu_sample_list.append(mu_sample)
+    mu_samples = (np.vstack(mu_sample_list)).T # (n_samples, n_functions)
+    pareto_mask = is_non_dominated_np(mu_samples)
+    pareto = mu_samples[pareto_mask]    
+    HV_class = Hypervolume(ref_point)
+    HV = HV_class.compute(pareto)
+    return HV
+    
+    
 def optim_process(
     f_multi, # list of functions
     constrains,
@@ -50,8 +63,11 @@ def optim_process(
     # choose the worst point instead
     # ref_point = np.min(Y_sample_multi, axis=1, keepdims=True).squeeze()
 
+    # inisialize a HV list to save Hypervolume of each iteration
+    HV_list = []
+    HV_RelErr_list = []
     # optimize loop
-    for i in range(n_init, n_iter+n_init):
+    for i in range(n_iter):
         if normalization:
             # normalization
             X_sample_normal = normalize(X_sample, bounds)
@@ -63,11 +79,23 @@ def optim_process(
             # Obtain next sampling point from the acquisition function(expected_improvement)
             X_next = propose_location(acq, X_sample, Y_sample_multi, gpr_list, bounds, ref_point)
 
-        Y_next = f_multi(X_next if dim == 1 else X_next.T) # TODO: change this to numerical simulation
-
         # Add sample to previous samples
         X_sample = np.vstack((X_sample, X_next))
-        Y_sample_multi = [np.append(Y, Y_new) for Y, Y_new in zip(Y_sample_multi, Y_next)] # not sure about dimension
+        # calculate HV values of this iteration and add it to the list
+        HV = from_X_calculate_HV(X_sample, gpr_list, ref_point)
+        HV_list.append(HV)
+        # convergence criteria
+        N = 10
+        if i > N:
+            # Calculate HVi_SM
+            HVi_SM = sum(HV_list[i - j] for j in range(N)) / N
+            # Calculate HV RelErr
+            HV_RelErr = (HV - HVi_SM) / HVi_SM
+            HV_RelErr_list.append(HV_RelErr)
+        # use the real model to calculate new Y and fit the GP model again
+        # TODO: change this to numerical simulation
+        Y_next = f_multi(X_next if dim == 1 else X_next.T)         
+        Y_sample_multi = [np.append(Y, Y_new) for Y, Y_new in zip(Y_sample_multi, Y_next)]
 
         # update GP model parameters
         for _, (Y_sample, gpr) in enumerate(zip(Y_sample_multi, gpr_list)):
@@ -79,6 +107,6 @@ def optim_process(
     for gpr in gpr_list:
         mu_sample_list.append(gpr.predict(X_sample))
     mu_sample = (np.vstack(mu_sample_list)).T # (n_samples, n_functions)
-    pareto_mask = is_non_dominated_np(mu_sample) # change it
+    pareto_mask = is_non_dominated_np(mu_sample) 
     pareto = mu_sample[pareto_mask]
-    return pareto, ref_point
+    return pareto, ref_point, HV_RelErr_list # TODO: return the X_sample that corresponds to pareto
