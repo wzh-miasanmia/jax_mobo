@@ -14,21 +14,6 @@ def schaffer_function_n1_multiobjective(x):
     f2 = (x - 2)**2
     return np.array([-f1, -f2]) # maximum
 
-def kursawe_function(x):
-    """
-    Kursawe Function
-
-    Parameters:
-    x (numpy array): Input variables x = [x1, x2]
-
-    Returns:
-    numpy array: The results of the Kursawe Function
-    """
-    f1 = -10 * np.exp(-0.2 * np.sqrt(x[0]**2 + x[1]**2))
-    f2 = (np.abs(x[0])**0.8 + 5 * np.sin(x[0]**3)) +\
-         (np.abs(x[1])**0.8 + 5 * np.sin(x[1]**3))
-    return np.array([-f1, -f2]) # maximum
-
 
 def poloni_objectives(x):
     A1 = 0.5 * np.sin(1) - 2 * np.cos(1) + np.sin(2) - 1.5 * np.cos(2)
@@ -41,3 +26,11 @@ def poloni_objectives(x):
     f2 = (x[0] + 3)**2 + (x[1] + 1)**2
 
     return np.array([-f1, -f2]) # maximum
+
+
+def viennet_function(x):
+    f1 = 0.5 * (x[0]**2 + x[1]**2) + np.sin(x[0]**2 + x[1]**2)
+    f2 = (3*x[0]-2*x[1]+4)**2 / 8 + (x[0]-x[1]+1)**2 / 27 + 15
+    f3 = 1 / (x[0]**2+x[1]**2+1) - 1.1 * np.exp(-(x[0]**2+x[1]**2))
+    
+    return np.array([-f1, -f2, -f3]) # maximum

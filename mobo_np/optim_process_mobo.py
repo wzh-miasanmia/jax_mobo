@@ -109,4 +109,4 @@ def optim_process(
     mu_sample = (np.vstack(mu_sample_list)).T # (n_samples, n_functions)
     pareto_mask = is_non_dominated_np(mu_sample) 
     pareto = mu_sample[pareto_mask]
-    return pareto, ref_point, HV_RelErr_list # TODO: return the X_sample that corresponds to pareto
+    return pareto, HV_RelErr_list # TODO: return the X_sample that corresponds to pareto

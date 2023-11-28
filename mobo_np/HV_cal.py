@@ -275,22 +275,25 @@ def sort_by_dimension(nodes: List[Node], i: int) -> None:
     nodes[:] = [node for (_, _, node) in decorated]
 
 
-def plot_pareto_hv(pareto_Y, ref_point):
+def plot_pareto_hv(pareto_Y, ref_point=None):
     # Compute Hypervolume
-    hv = Hypervolume(ref_point)
-    hypervolume_value = hv.compute(pareto_Y)
+    if ref_point is not None:
+        hv = Hypervolume(ref_point)
+        hypervolume_value = hv.compute(pareto_Y)
 
     # Plot Pareto Front
     fig = plt.figure()
     if pareto_Y.shape[1] == 2:
         plt.scatter(pareto_Y[:, 0], pareto_Y[:, 1], label="Pareto Front", c='blue', marker='o')
-        plt.scatter(ref_point[0], ref_point[1], label="Reference Point", c='red', marker='x')
+        if ref_point is not None:
+            plt.scatter(ref_point[0], ref_point[1], label="Reference Point", c='red', marker='x')
         plt.xlabel("Objective 1")
         plt.ylabel("Objective 2")
     elif pareto_Y.shape[1] == 3:
         ax = fig.add_subplot(111, projection='3d')
         ax.scatter(pareto_Y[:, 0], pareto_Y[:, 1], pareto_Y[:, 2], label="Pareto Front", c='blue', marker='o')
-        ax.scatter(ref_point[0], ref_point[1], ref_point[2], label="Reference Point", c='red', marker='x')
+        if ref_point is not None:
+            ax.scatter(ref_point[0], ref_point[1], ref_point[2], label="Reference Point", c='red', marker='x')
         ax.set_xlabel("Objective 1")
         ax.set_ylabel("Objective 2")
         ax.set_zlabel("Objective 3")
@@ -299,6 +302,9 @@ def plot_pareto_hv(pareto_Y, ref_point):
     # hv.plot(ref_point, pareto_Y)
 
     # Display Hypervolume
-    plt.title(f'Hypervolume: {hypervolume_value:.4f}')
+    if ref_point is not None:
+        plt.title(f'Hypervolume: {hypervolume_value:.4f}')
+    else:
+        plt.title('Pareto front')
     plt.legend()
     plt.show()
