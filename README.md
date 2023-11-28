@@ -12,13 +12,13 @@ Completed:
 - Single-objective Bayesian optimization:
     - with numpy
     - with JAX: do not have a proper minimize function
-- Multi-objective Bayesian optimization
+- Multi-objective Bayesian optimization:
     - with numpy
     - EHVI method: HV calculation using Dimension Sweep Algorithm
+    - multi-objective Bayesian optimization with convergence checking
 
 Plan to proceed:
-- multi-objective Bayesian optimization with convergence checking
-- combined with numerical simulation
+- combined with jax-fluid numerical simulation
 
 
 ## details
@@ -32,7 +32,7 @@ noramlization problem still need to solve
 mobo_learn:
 learn how to implement mobo method, according to botorch
 
-mobo_np:
+mobo_np:(main work)
 Code written by zihao to complete the multi-objective bayesian optimization process using numpy
 
 
@@ -45,5 +45,3 @@ cd ./jax_mobo/
 ```python
 cd ./jax_mobo/mobo_np
 ```
-- run sobo_1d.ipynb and you will get the result with a automatically generated plots documenting the selection of each point and an image of the proxy model
-- run sobo_2d.ipynb and you will get the result, then use plot funciton to have a look at the result points.
