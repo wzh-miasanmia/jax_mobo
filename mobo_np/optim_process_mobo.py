@@ -26,7 +26,7 @@ def from_X_calculate_HV(X_sample, gpr_list, ref_point):
     
 def optim_process(
     f_multi, # list of functions
-    constrains,
+    constraints,
     noise,
     acq = expected_hypervolume_improvement,
     n_init = 5, # Number of initial evaluations before suggesting optimized samples.
@@ -34,7 +34,7 @@ def optim_process(
     normalization = False,
 ):
 
-    bounds = np.asarray(list(constrains.values()))
+    bounds = np.asarray(list(constraints.values()))
     dim = len(bounds)
     # generate data
     X_init = np.random.uniform(
