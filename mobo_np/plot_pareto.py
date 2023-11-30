@@ -55,7 +55,7 @@ def plot_pareto_2d_3o(f, constraints, pareto):
     pareto_real_mask = is_non_dominated_np(function_values)
     pareto_real = function_values[pareto_real_mask]
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(15, 8))
     ax = fig.add_subplot(111, projection='3d')
 
     # Plotting true Pareto points in blue
