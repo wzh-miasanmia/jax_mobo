@@ -18,23 +18,26 @@ Completed:
     - multi-objective Bayesian optimization with convergence checking
 
 Plan to proceed:
+- mobo with JAX
 - combined with jax-fluid numerical simulation
 
 
 ## details
 bayesian_jax:
-Reference to the completed package on github has been changed to include the ability to draw 2d and 3d graphics
+reference to the completed package on github has been changed to include the ability to draw 2d and 3d graphics
 
 sobo_demo:
-Code written by zihao to complete the Bayesian optimization process using jax
+complete the Bayesian optimization process using jax
 noramlization problem still need to solve
 
 mobo_learn:
 learn how to implement mobo method, according to botorch
 
 mobo_np:(main work)
-Code written by zihao to complete the multi-objective bayesian optimization process using numpy
+complete the multi-objective bayesian optimization process using numpy
 
+mobo_jax:
+complete the multi-objective bayesian optimization process using JAX
 
 ## usage
 ```python
