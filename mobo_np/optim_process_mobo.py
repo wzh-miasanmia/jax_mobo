@@ -102,7 +102,6 @@ def optim_process(
             gpr.fit(X_sample, Y_sample)
             gpr.optim_np()
             
-    ## TODO: add a convergence check according to the paper function 24
     mu_sample_list = []
     for gpr in gpr_list:
         mu_sample_list.append(gpr.predict(X_sample))
