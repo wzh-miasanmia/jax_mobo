@@ -32,9 +32,11 @@ def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[], save_path=None):
     if X_train is not None:
         plt.plot(X_train, Y_train, 'rx')
     plt.legend()
-    plt.show()
+
     if save_path:
         plt.savefig(save_path)
+    else:
+        plt.show()
 
 def plot_gp_2D(gx, gy, mu, X_train, Y_train, title, i):
     ax = plt.gcf().add_subplot(1, 2, i, projection='3d')
