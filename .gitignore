@@ -1,0 +1,6 @@
+__pycache__/
+baseline/imp/results/
+baseline/tgv_teno5/results/
+baseline/tgv_teno6/results/
+imp/results
+tgv/results

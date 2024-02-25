@@ -1,0 +1,73 @@
+{
+    "general": {
+        "case_name": "tgv",
+        "end_time": 10.0,
+        "save_path": "./results",
+        "save_dt": 1.0
+    },
+    "restart": {
+        "flag": false,
+        "file_path": "./results/tgv/domain/data_0.0000000000.h5"
+    },
+    "domain": {
+        "x": {
+            "cells": 64,
+            "range": [0.0, 6.283185307179586]
+        },
+        "y": {
+            "cells": 64,
+            "range": [0.0, 6.283185307179586]
+        },
+        "z": {
+            "cells": 64,
+            "range": [0.0, 6.283185307179586]
+        },
+        "decomposition": {
+            "split_x": 1,
+            "split_y": 1,
+            "split_z": 1
+        }
+    },
+    "boundary_conditions": {
+        "east": {"type": "PERIODIC"},
+        "west": {"type": "PERIODIC"},
+        "north": {"type": "PERIODIC"},
+        "south": {"type": "PERIODIC"},
+        "top": {"type": "PERIODIC"},
+        "bottom": {"type": "PERIODIC"}
+    },
+    "initial_condition": {
+        "rho": 1.0,
+        "u": "lambda x, y, z:  1.0 * jnp.sin(x - jnp.pi) * jnp.cos(y - jnp.pi) * jnp.cos(z - jnp.pi)",
+        "v": "lambda x, y, z: -1.0 * jnp.cos(x - jnp.pi) * jnp.sin(y - jnp.pi) * jnp.cos(z - jnp.pi)",
+        "w": 0.0,
+        "p": "lambda x, y, z: 100.0 + 1.0 / 16.0 * ((jnp.cos(2.0*(x - jnp.pi)) + jnp.cos(2.0*(y - jnp.pi))) * (2.0 + jnp.cos(2.0*(z - jnp.pi))) - 2.0)"
+    },
+    "material_properties": {
+        "equation_of_state": {
+            "model": "IdealGas",
+            "specific_heat_ratio": 1.4,
+            "specific_gas_constant": 1.0
+        },
+        "transport": {
+            "dynamic_viscosity": {
+                "model": "CUSTOM",
+                "value": 0.0
+            },
+            "bulk_viscosity": 0.0,
+            "thermal_conductivity": {
+                "model": "CUSTOM",
+                "value": 0.0
+            }
+        }
+    },
+    "nondimensionalization_parameters": {
+        "density_reference": 1.0,
+        "length_reference": 1.0,
+        "velocity_reference": 1.0,
+        "temperature_reference": 1.0
+    },
+    "output": {
+        "primitives": ["density", "velocity", "pressure"]
+    }
+}
