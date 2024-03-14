@@ -26,6 +26,13 @@ cbar.set_ticks(np.arange(0, 36, 5))  # 这里设置了从0到30，每5个单位�
 contour_lines = plt.contour(x, y, z, colors='white', linewidths=0.5)
 plt.clabel(contour_lines, inline=True, fontsize=8)
 
+# 标出特定的点
+# 点1: f(-0.54719, -1.54719) = -1.9133
+plt.plot(-0.54719, -1.54719, 'ro', label='(-0.54719, -1.54719)')
+# # 点2: f(-0.54, -1.55) = -1.91
+# plt.plot(-0.54, -1.55, 'b*', label='(-0.54, -1.55)')
+
+
 # 添加标签和标题
 plt.xlabel('x')
 plt.ylabel('y')
