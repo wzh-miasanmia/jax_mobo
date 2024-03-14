@@ -22,8 +22,8 @@ def plot_pareto_1d_2o(f, constraints, pareto, file_path):
     # Plotting model-calculated Pareto points in red 'x'
     plt.scatter(-pareto[:, 0], -pareto[:, 1], label='Model Pareto Points', color=tum_blue, marker='x')
 
-    plt.xlabel('Objective 1')
-    plt.ylabel('Objective 2')
+    plt.xlabel('f1')
+    plt.ylabel('f2')
     plt.legend()
     # plt.show()
     plt.savefig(file_path, format='pdf')
@@ -52,8 +52,8 @@ def plot_pareto_2d_2o(f, constraints, pareto, file_path):
     # Plotting model-calculated Pareto points in red 'x'
     plt.scatter(-pareto[:, 0], -pareto[:, 1], label='Model Pareto Points', color=tum_blue, marker='x')
 
-    plt.xlabel('Objective 1')
-    plt.ylabel('Objective 2')
+    plt.xlabel('f1')
+    plt.ylabel('f2')
     plt.legend()
     # plt.show()
     plt.savefig(file_path, format='pdf')
@@ -77,7 +77,7 @@ def plot_pareto_2d_3o(f, constraints, pareto, file_path):
     pareto_real_mask = is_non_dominated_np(function_values)
     pareto_real = function_values[pareto_real_mask]
 
-    fig = plt.figure(figsize=(15, 8))
+    fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111, projection='3d')
 
     # Plotting true Pareto points in blue
@@ -86,9 +86,9 @@ def plot_pareto_2d_3o(f, constraints, pareto, file_path):
     # Plotting model-calculated Pareto points in red 'x'
     ax.scatter(-pareto[:, 0], -pareto[:, 1], -pareto[:, 2], label='Model Pareto Points', color=tum_blue, marker='x')
 
-    ax.set_xlabel('Objective 1')
-    ax.set_ylabel('Objective 2')
-    ax.set_zlabel('Objective 3')
+    ax.set_xlabel('f1')
+    ax.set_ylabel('f2')
+    ax.set_zlabel('f3')
     ax.legend()
     # plt.show()
     plt.savefig(file_path, format='pdf')
