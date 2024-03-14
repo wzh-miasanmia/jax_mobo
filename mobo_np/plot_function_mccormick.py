@@ -29,7 +29,6 @@ plt.clabel(contour_lines, inline=True, fontsize=8)
 # 添加标签和标题
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('McCormick Function')
 
 # 显示图形
 plt.savefig('/home/wzhmiasanmia/ma_workspace/jax_mobo/mobo_np/McCormick.png')
