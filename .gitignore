@@ -1,2 +1,4 @@
 __pycache__/
 mobo_np/__pycache__/
+sobo_jax/__pycache__/
+bayesian_jax/__pycache__/
