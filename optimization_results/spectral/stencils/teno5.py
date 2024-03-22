@@ -72,15 +72,15 @@ class TENO5(ReconstructionStencil):
             if self.nonlinear:
                 s11 = coef_smoothness_11_ * v2 + coef_smoothness_12_ * v3 + coef_smoothness_13_ * v4
                 s12 = coef_smoothness_14_ * v2 + coef_smoothness_15_ * v4
-                s1 = coef_smoothness_1_ * s11 * s11 + coef_smoothness_2_ * s12 * s12
+                s1 = coef_smoothness_1_ * s11 * s11 + coef_smoothness_2_ * s12 * s12 # beta_0
 
                 s21 = coef_smoothness_21_ * v3 + coef_smoothness_22_ * v4 + coef_smoothness_23_ * v5
                 s22 = coef_smoothness_24_ * v3 + coef_smoothness_25_ * v4 + coef_smoothness_26_ * v5
-                s2 = coef_smoothness_1_ * s21 * s21 + coef_smoothness_2_ * s22 * s22
+                s2 = coef_smoothness_1_ * s21 * s21 + coef_smoothness_2_ * s22 * s22 # beta_1
 
                 s31 = coef_smoothness_31_ * v1 + coef_smoothness_32_ * v2 + coef_smoothness_33_ * v3
                 s32 = coef_smoothness_34_ * v1 + coef_smoothness_35_ * v2 + coef_smoothness_36_ * v3
-                s3 = coef_smoothness_1_ * s31 * s31 + coef_smoothness_2_ * s32 * s32
+                s3 = coef_smoothness_1_ * s31 * s31 + coef_smoothness_2_ * s32 * s32 # beta_2
 
                 tau5 = abs(s3 - s2)
 
