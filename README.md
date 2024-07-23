@@ -1,7 +1,6 @@
 # Project Overview
 ## Developer
-Zihao Wang <z.h.wang@tum.de>, master student in Technical University of Munich
-
+Zihao Wang, a master's student at the Technical University of Munich (TUM), can be reached at z.h.wang@tum.de. This work is part of master's thesis.
 
 ## Purpose
 The purpose of this repo is to establish a multi-objective Bayesian optimization framework and for choosing the hyperparameters in the TENO6-DV format in computational fluid dynamics (based on JAX-fluids).
