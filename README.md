@@ -1,8 +1,12 @@
 # Project Overview
+## Developer
+Zihao Wang <z.h.wang@tum.de>, master student in Technical University of Munich
+
+
 ## Purpose
-The purpose of this repo is to establish the use of Jax and numpy to complete a multi-objective Bayesian optimization problem and for choosding the hyperparameters in the TENO6-DV format in computational fluid dynamics (based on JAX-fluids).
+The purpose of this repo is to establish a multi-objective Bayesian optimization framework and for choosing the hyperparameters in the TENO6-DV format in computational fluid dynamics (based on JAX-fluids).
 ## Description
-This project is divided into three main parts, each residing in its own separate branch:
+This project is divided into five parts, each residing in its own separate branch:
 
 - **mobo branch**: This branch contains the implementation of Multi-Objective Bayesian Optimization (MOBO) using two different approaches: JAX and NumPy. In the `mobo_np` directory, there are some simple test functions used to verify the correctness of the algorithm.
 
@@ -10,8 +14,16 @@ This project is divided into three main parts, each residing in its own separate
 
 - **optim_multi branch**: Dedicated to multi-objective optimization, this branch deals with several objectives including `f_disper`, `f_tke`, and `f_cons`.
 
-Each branch is tailored to address specific aspects of optimization problems, from single-objective to multi-objective scenarios, employing various computational methods and verification tests to ensure the efficacy and accuracy of the optimization algorithms employed.
+- **plot branch**: Bayesian optimization algorithms and CFD interpretation plots for the thesis, produced by a software.
 
+- **results branch**: Optimization and simulation results, including  spectral properties of TENO6DV and the CFD simulation results for some 2D classical cases based on it.
+
+## Results
+You could see result in **results branch**. In some classical cases, TENO6DV solves the oscillation problem of TENO6, while reducing dissipation and having a longer diagonal jet. 
+
+For example this 2D implosion case with 128 x 128 Grid:
+
+![results](result.png)
 
 ## Project Setup Guide
 
@@ -53,7 +65,3 @@ conda install --file requirements.txt
 ### Step 5: Verify Installation
 After installation, you can verify that all packages were installed correctly by listing the installed packages:
 
-### Troubleshooting
-If you encounter any errors during the installation of packages, try searching for the error message online for specific solutions, or consult the official documentation of the problematic package.
-Ensure that your conda is up to date by running conda update conda.
-For issues related to pip packages, ensure that your pip is up to date by running pip install --upgrade pip in your conda environment.
